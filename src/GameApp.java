@@ -13,10 +13,13 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.util.regex.Pattern;
+
 /**
  * @author zilla0148
  */
 public class GameApp extends Application {
+    private static Pattern NUMBER_PATTERN = Pattern.compile("^[-\\+]?[\\d]*$");
     private Deck deck = new Deck();
     private Player player = new Player("Zoe",100);
     private Hand dealerHand, playerHand;
@@ -32,22 +35,20 @@ public class GameApp extends Application {
         playerHand = new Hand(playerCardsBox.getChildren());
 
         Pane root = new Pane();
-        root.setPrefSize(800, 600);
+        root.setPrefSize(900, 600);
 
         Region background = new Region();
-        background.setPrefSize(800, 600);
-        background.setStyle("-fx-background-color: rgba(0, 0, 0, 1)");
 
-        HBox rootLayout = new HBox(5);
+        HBox rootLayout = new HBox(10);
         rootLayout.setPadding(new Insets(5, 5, 5, 5));
-        Rectangle leftBG = new Rectangle(550, 560);
+        Rectangle leftBG = new Rectangle(640, 560);
         leftBG.setArcWidth(50);
         leftBG.setArcHeight(50);
-        leftBG.setFill( Color.GREEN);
-        Rectangle rightBG = new Rectangle(230, 560);
+        leftBG.setFill( Color.AQUAMARINE);
+        Rectangle rightBG = new Rectangle(235, 560);
         rightBG.setArcWidth(50);
         rightBG.setArcHeight(50);
-        rightBG.setFill(Color.ORANGE);
+        rightBG.setFill(Color.LIGHTSALMON);
 
         // LEFT
         VBox leftVBox = new VBox(50);
@@ -59,13 +60,15 @@ public class GameApp extends Application {
         leftVBox.getChildren().addAll(dealerScore, dealerCardsBox, message, playerCardsBox, playerScore);
 
         // RIGHT
-
         VBox rightVBox = new VBox(20);
         rightVBox.setAlignment(Pos.CENTER);
 
         final TextField betTxt = new TextField("BET default 30");
+        final TextField nameTxt= new TextField( "Name default Zoe");
+        nameTxt.setDisable( false );
         betTxt.setDisable(false);
-        betTxt.setMaxWidth(50);
+        nameTxt.setMaxWidth( 130 );
+        betTxt.setMaxWidth(130);
         Text moneyRest = new Text( "Money:" );
 
         Button btnPlay = new Button("PLAY");
@@ -75,7 +78,7 @@ public class GameApp extends Application {
         HBox buttonsHBox = new HBox(15, btnHit, btnStand);
         buttonsHBox.setAlignment(Pos.CENTER);
 
-        rightVBox.getChildren().addAll(betTxt, btnPlay, moneyRest, buttonsHBox);
+        rightVBox.getChildren().addAll(nameTxt,betTxt, btnPlay, moneyRest, buttonsHBox);
 
         // ADD BOTH STACKS TO ROOT LAYOUT
 
@@ -93,20 +96,24 @@ public class GameApp extends Application {
         moneyRest.textProperty().bind(new SimpleStringProperty("Money ").concat(player.moneyProperty()));
 
         checkBust( betTxt, playerHand );
-
         checkBust( betTxt, dealerHand );
 
         // INIT BUTTONS
 
         btnPlay.setOnAction(event -> {
+            nameTxt.setDisable( true );
             betTxt.setDisable( true );
-            currBet = Integer.valueOf(betTxt.getText());
+            String name=nameTxt.getText();
+            if(!"Name default Zoe".equals( name )){
+                player.setNickname(name);
+            }
+            if(isInteger(betTxt.getText())) {
+                currBet = Integer.valueOf(betTxt.getText());
+            }
             startNewGame();
         });
 
-        btnHit.setOnAction(event -> {
-            playerHand.addCard(deck.drawCard());
-        });
+        btnHit.setOnAction(event -> playerHand.addCard(deck.drawCard()) );
 
         btnStand.setOnAction(event -> {
             while (dealerHand.getTotalProperty().get() < 17) {
@@ -146,6 +153,8 @@ public class GameApp extends Application {
             dealerHand.addCard(deck.drawCard());
             playerHand.addCard(deck.drawCard());
             playerHand.addCard(deck.drawCard());
+        }else {
+            message.setText( "Without enough money!!!!!" );
         }
     }
 
@@ -179,7 +188,9 @@ public class GameApp extends Application {
                 detail="BLACKJACK";
                 player.setMoney( player.getMoney()+currBet*3/2 );
             }
+            player.setMoney( player.getMoney()+currBet );
         }else if(dealerValue == playerValue){
+            winner="";
             detail="DRAW. YOU RETAIN THE BET.";
         }
         if(player.getMoney()<=0){
@@ -189,13 +200,17 @@ public class GameApp extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         primaryStage.setScene(new Scene(createUIContent()));
-        primaryStage.setWidth(800);
+        primaryStage.setWidth(900);
         primaryStage.setHeight(600);
         primaryStage.setResizable(false);
-        primaryStage.setTitle("BlackJack");
+        primaryStage.setTitle("BlackJack_2018OOAD");
         primaryStage.show();
+    }
+
+    private static boolean isInteger(String str) {
+        return NUMBER_PATTERN.matcher(str).matches();
     }
 
     public static void main(String[] args) {
